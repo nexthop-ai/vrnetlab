@@ -145,7 +145,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--hostname", default="sonic", help="SONiC hostname")
     parser.add_argument("--username", default="admin", help="Username")
-    parser.add_argument("--password", default="admin", help="Password")
+    parser.add_argument("--password", default=DEFAULT_PASSWORD, help="Password")
     parser.add_argument(
         "--connection-mode", default="tc", help="Connection mode to use in the datapath"
     )

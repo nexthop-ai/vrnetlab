@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEFAULT_USER="admin"
-DEFAULT_PASSWORD="admin"
+DEFAULT_PASSWORD="YourPaSsWoRd"
 REMOTE_FILE="/etc/sonic/config_db.json"
 TMP_FILE="/tmp/${REMOTE_FILE##*/}"
 BACKUP_FILE="/config/${REMOTE_FILE##*/}"
