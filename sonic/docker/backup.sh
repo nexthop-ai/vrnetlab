@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEFAULT_USER="admin"
-DEFAULT_PASSWORD="YourPaSsWoRd"
+DEFAULT_PASSWORD="Nexthop@24"
 REMOTE_FILE="/etc/sonic/config_db.json"
 TMP_FILE="/tmp/${REMOTE_FILE##*/}"
 BACKUP_FILE="/config/${REMOTE_FILE##*/}"
