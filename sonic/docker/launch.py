@@ -12,7 +12,7 @@ import vrnetlab
 
 CONFIG_FILE = "/config/config_db.json"
 DEFAULT_USER = "admin"
-DEFAULT_PASSWORD = "YourPaSsWoRd"
+DEFAULT_PASSWORD = "admin"
 
 
 def handle_SIGCHLD(_signal, _frame):
@@ -104,10 +104,6 @@ class SONiC_vm(vrnetlab.VM):
         self.logger.info("applying bootstrap configuration")
         self.wait_write("sudo -i", "$")
         self.wait_write("/usr/sbin/ip address add 10.0.0.15/24 dev eth0", "#")
-        self.wait_write("passwd -q %s" % (self.username))
-        self.wait_write(self.password, "New password:")
-        self.wait_write(self.password, "password:")
-        self.wait_write("sleep 1", "#")
         self.wait_write("hostnamectl set-hostname %s" % (self.hostname))
         self.wait_write("sleep 1", "#")
         self.wait_write("printf '127.0.0.1\\t%s\\n' >> /etc/hosts" % (self.hostname))
@@ -119,6 +115,7 @@ class SONiC_vm(vrnetlab.VM):
 
         if not os.path.exists(CONFIG_FILE):
             self.logger.trace(f"Backup file {CONFIG_FILE} not found")
+            self.set_password()
             return
 
         self.logger.trace(f"Backup file {CONFIG_FILE} exists")
@@ -128,6 +125,53 @@ class SONiC_vm(vrnetlab.VM):
             check=True,
             shell=True,
         )
+
+        # Set password after config restore to ensure it persists
+        self.set_password()
+
+    def set_password(self):
+        """Set the admin password via SSH"""
+        import time
+
+        self.logger.info(f"Setting password for user {self.username}")
+
+        # Wait a bit for SSH to be available
+        time.sleep(5)
+
+        # Use subprocess to change password via SSH
+        change_password_cmd = (
+            f"sshpass -p '{DEFAULT_PASSWORD}' ssh -o StrictHostKeyChecking=no "
+            f"-o UserKnownHostsFile=/dev/null {self.username}@10.0.0.15 "
+            f"\"echo '{self.username}:{self.password}' | sudo chpasswd\""
+        )
+
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                result = subprocess.run(
+                    change_password_cmd,
+                    shell=True,
+                    capture_output=True,
+                    timeout=10
+                )
+                if result.returncode == 0:
+                    self.logger.info("Password changed successfully")
+                    # Save the config to persist the change
+                    save_cmd = (
+                        f"sshpass -p '{self.password}' ssh -o StrictHostKeyChecking=no "
+                        f"-o UserKnownHostsFile=/dev/null {self.username}@10.0.0.15 "
+                        f"'sudo config save -y'"
+                    )
+                    subprocess.run(save_cmd, shell=True, timeout=10)
+                    return
+                else:
+                    self.logger.debug(f"Password change attempt {attempt + 1} failed: {result.stderr.decode()}")
+            except Exception as e:
+                self.logger.debug(f"Password change attempt {attempt + 1} failed: {e}")
+
+            time.sleep(2)
+
+        self.logger.warning("Failed to change password after multiple attempts")
 
 
 class SONiC(vrnetlab.VR):
