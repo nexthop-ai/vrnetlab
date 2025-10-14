@@ -108,10 +108,28 @@ class SONiC_vm(vrnetlab.VM):
         self.wait_write(self.password, "New password:")
         self.wait_write(self.password, "password:")
         self.wait_write("sleep 1", "#")
-        self.wait_write("hostnamectl set-hostname %s" % (self.hostname))
-        self.wait_write("sleep 1", "#")
         self.wait_write("printf '127.0.0.1\\t%s\\n' >> /etc/hosts" % (self.hostname))
         self.wait_write("sleep 1", "#")
+
+        # Apply hostname configuration while still in root session
+        self.logger.info("applying hostname configuration")
+        self.logger.info("disabling ZTP")
+        self.wait_write("ztp disable -y", "#")
+        self.logger.info("waiting 1 minute for ZTP to fully disable and system to stabilize")
+        self.wait_write("sleep 60", "#")  # Give ZTP 1 minute to fully disable
+
+        # Set hostname using SONiC config command
+        self.logger.info(f"setting hostname to {self.hostname}")
+        self.wait_write("config hostname %s" % (self.hostname), "#")
+        self.wait_write("sleep 1", "#")
+
+        # Save configuration
+        self.logger.info("saving configuration")
+        self.wait_write("config save -y", "#")
+        self.wait_write("sleep 1", "#")
+        self.logger.info("completed hostname configuration")
+
+        self.wait_write("logout", "#")
         self.logger.info("completed bootstrap configuration")
 
     def startup_config(self):
