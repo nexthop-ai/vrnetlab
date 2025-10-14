@@ -1,6 +1,6 @@
 FROM public.ecr.aws/docker/library/debian:bookworm-slim AS builder
 
-ARG DISK_SIZE=4G
+ARG DISK_SIZE=30G
 
 RUN apt-get update -qy && \
    apt-get install -y --no-install-recommends qemu-utils && \
@@ -13,7 +13,7 @@ RUN qemu-img resize /$IMAGE $DISK_SIZE
 FROM public.ecr.aws/docker/library/debian:bookworm-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG DISK_SIZE=4G
+ARG DISK_SIZE=30G
 
 RUN apt-get update -qy \
    && apt-get install -y --no-install-recommends\
@@ -30,13 +30,12 @@ RUN apt-get update -qy \
    telnet \
    cloud-utils \
    sshpass \
-   python3-yaml \
    && rm -rf /var/lib/apt/lists/*
 
 ARG IMAGE
 COPY --from=builder $IMAGE* /
 COPY *.py /
-COPY --chmod=0755 backup.sh /
+COPY templates/ /templates/
 
 EXPOSE 22 5000 10000-10099
 HEALTHCHECK CMD ["/healthcheck.py"]
