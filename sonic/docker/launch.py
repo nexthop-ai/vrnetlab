@@ -7,7 +7,6 @@ import re
 import signal
 import subprocess
 import sys
-import telnetlib
 
 import vrnetlab
 
@@ -124,11 +123,6 @@ class SONiC_vm(vrnetlab.VM):
         self.wait_write("config hostname %s" % (self.hostname), "#")
         self.wait_write("sleep 1", "#")
 
-        # Also set system hostname immediately
-        self.logger.info(f"setting system hostname to {self.hostname}")
-        self.wait_write("hostnamectl set-hostname %s" % (self.hostname), "#")
-        self.wait_write("sleep 1", "#")
-
         # Save configuration
         self.logger.info("saving configuration")
         self.wait_write("config save -y", "#")
@@ -152,13 +146,6 @@ class SONiC_vm(vrnetlab.VM):
             check=True,
             shell=True,
         )
-
-
-
-
-
-
-
 
 
 class SONiC(vrnetlab.VR):
